@@ -3,6 +3,7 @@ package notion
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,6 +22,9 @@ const (
 	RollupValueTypeEnumNumber = "number"
 	RollupValueTypeEnumDate   = "date"
 	RollupValueTypeEnumArray  = "array"
+
+	FileTypeEnumFile     = "file"
+	FileTypeEnumExternal = "external"
 )
 
 // ParentTypeEnum represents the parent type in the Notion API.
@@ -81,6 +85,26 @@ func (rvte *RollupValueTypeEnum) IsValidEnum() bool {
 // UnmarshalJSON returns an error if the type is not a valid enum in the Notion API.
 func (rvte *RollupValueTypeEnum) UnmarshalJSON(b []byte) error {
 	return unmarshalEnum(b, rvte)
+}
+
+// FileTypeEnum represents a file type in the Notion API.
+type FileTypeEnum string
+
+// SetValue sets the FileTypeEnum to the given string
+func (pte *FileTypeEnum) SetValue(s string) {
+	if pte != nil {
+		*pte = FileTypeEnum(s)
+	}
+}
+
+// IsValidEnum returns true if the string represents a valid FileTypeEnum in the Notion API.
+func (pte *FileTypeEnum) IsValidEnum() bool {
+	return pte != nil && isValidEnum(string(*pte), FileTypeEnumFile, FileTypeEnumExternal)
+}
+
+// UnmarshalJSON returns an error if the type is not a valid enum in the Notion API.
+func (pte *FileTypeEnum) UnmarshalJSON(b []byte) error {
+	return unmarshalEnum(b, pte)
 }
 
 // Parent represents the parent object of a page in the Notion API.
@@ -193,7 +217,42 @@ type RollupValue struct {
 
 // A File represents a file property of a page in a database in the Notion API.
 type File struct {
-	Name string `json:"name"`
+	Name       string       `json:"name"`
+	Type       FileTypeEnum `json:"type"`
+	URL        *jsonURL     `json:"url"`
+	ExpiryTime time.Time    `json:"expiry_time,omitempty"`
+}
+
+type file File
+
+// GetType returns the type of the page property
+func (f *file) getType() string {
+	if f == nil {
+		return ""
+	}
+	return string(f.Type)
+}
+
+// FieldsToExpand implements the expander interface for File
+func (f *file) fieldsToExpand() []string {
+	return []string{"url", "expiry_time"}
+}
+
+// UnmarshalJSON flattens the page property by its type
+func (f *File) UnmarshalJSON(b []byte) error {
+	ff := new(file)
+	if err := unmarshalJSONFlattenByType(b, ff); err != nil {
+		return err
+	}
+
+	*f = File(*ff)
+	return nil
+}
+
+// MarshalJSON marshals the File to be compatible with the Notion API.
+func (f *File) MarshalJSON() ([]byte, error) {
+	ff := file(*f)
+	return marshalJSONExpandByType(&ff)
 }
 
 // PageProperty represents a property of a page in a database in the Notion API.
@@ -249,9 +308,6 @@ func (pp *PageProperty) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON marshals the page property to be compatible with the Notion API.
 func (pp *PageProperty) MarshalJSON() ([]byte, error) {
-	if pp.Type == DatabasePropertyTypeEnumFormula {
-		return []byte("{}"), nil
-	}
 	ppp := pageProperty(*pp)
 	return marshalJSONExpandByType(&ppp)
 }
@@ -296,10 +352,12 @@ func (pps *PageProperties) MarshalJSON() ([]byte, error) {
 type Page struct {
 	Object
 	Editable
+	Icons
 	Archived   bool           `json:"archived"`
 	Parent     Parent         `json:"parent"`
 	Properties PageProperties `json:"properties"`
 	Children   Blocks         `json:"children,omitempty"`
+	URL        *jsonURL       `json:"url"`
 }
 
 // Pages is a slice of pages from the Notion API.

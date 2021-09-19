@@ -45,6 +45,36 @@ func (c *Client) QueryDatabase(ctx context.Context, id string, query *DBQuery) (
 	return results, nil
 }
 
+// CreateDatabase will send a request to create the given database in the Notion API.
+// All that is needed in the notion.Database object are the Parent and Properties.
+// Optionally, a Title can be set.
+// No IDs need to be given.
+// On success, the notion.Database will be the complete page from the Notion API.
+// On error, the notion.Page will not be changed.
+func (c *Client) CreateDatabase(ctx context.Context, db *notion.Database) error {
+	body := map[string]interface{}{
+		"parent":     &db.Parent,
+		"properties": &db.Properties,
+	}
+	if len(db.Title) != 0 {
+		body["title"] = &db.Title
+	}
+
+	return c.createObject(ctx, fmt.Sprintf("%s/v1/databases", apiBaseURL), body, db)
+}
+
+// UpdateDatabase updates the database in the Notion API.
+// On success, the database is the complete database from the Notion API.
+// On error, the database is not updated.
+func (c *Client) UpdateDatabase(ctx context.Context, db *notion.Database) error {
+	body := map[string]interface{}{
+		"title":      db.Title,
+		"properties": db.Properties,
+	}
+
+	return c.updateObject(ctx, fmt.Sprintf("%s/v1/databases/%s", apiBaseURL, db.ID), body, db)
+}
+
 // GetDatabase gets a database with the given id from the Notion API.
 func (c *Client) GetDatabase(ctx context.Context, id string) (*notion.Database, error) {
 	db := &notion.Database{}

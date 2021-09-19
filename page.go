@@ -1,9 +1,7 @@
 package gotion
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -40,28 +38,22 @@ func (c *Client) GetPageAndChildren(ctx context.Context, id string, maxResults i
 // On success, the notion.Page returned will be the complete page from the Notion API.
 // On error, the notion.Page returned is the original one.
 func (c *Client) CreatePage(ctx context.Context, page *notion.Page) (*notion.Page, error) {
-	bodyBytes, err := json.Marshal(map[string]interface{}{
+	body := map[string]interface{}{
 		"parent":     &page.Parent,
 		"properties": &page.Properties,
-	})
-	if err != nil {
-		return page, err
 	}
 
-	return page, c.makeRequest(ctx, http.MethodPost, fmt.Sprintf("%s/v1/pages", apiBaseURL), bytes.NewReader(bodyBytes), page)
+	return page, c.createObject(ctx, fmt.Sprintf("%s/v1/pages", apiBaseURL), body, page)
 }
 
 // UpdatePageProperties updates the page properties in the Notion API.
 // All that is needed in the notion.Page are the page ID and Properties.
 // A caller doesn't need to provide all properties, but only the updates ones. However, providing all properties
 // works fine as well.
-// On success, the notion.Page returned will be the complete page from the Notion API.
-// On error, the notion.Page returned is the original one.
-func (c *Client) UpdatePageProperties(ctx context.Context, page *notion.Page) (*notion.Page, error) {
-	bodyBytes, err := json.Marshal(map[string]interface{}{"properties": page.Properties})
-	if err != nil {
-		return page, err
-	}
+// On success, the notion.Page will be the complete page from the Notion API.
+// On error, the notion.Page will be changed.
+func (c *Client) UpdatePageProperties(ctx context.Context, page *notion.Page) error {
+	body := map[string]interface{}{"properties": page.Properties}
 
-	return page, c.makeRequest(ctx, http.MethodPatch, fmt.Sprintf("%s/v1/pages/%s", apiBaseURL, page.ID), bytes.NewReader(bodyBytes), page)
+	return c.updateObject(ctx, fmt.Sprintf("%s/v1/pages/%s", apiBaseURL, page.ID), body, page)
 }

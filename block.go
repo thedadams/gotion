@@ -10,7 +10,30 @@ import (
 	"github.com/thedadams/gotion/notion"
 )
 
-// GetBlockChildren gets a the children of the block with the given id from the Notion API.
+// GetBlock gets a block with the given id from the Notion API.
+func (c *Client) GetBlock(ctx context.Context, id string) (*notion.Block, error) {
+	block := &notion.Block{}
+	err := c.makeRequest(ctx, http.MethodGet, fmt.Sprintf("%s/v1/blocks/%s", apiBaseURL, id), nil, block)
+	if err != nil {
+		block = nil
+	}
+
+	return block, err
+}
+
+// DeleteBlock deletes a block with the given id from the Notion API.
+func (c *Client) DeleteBlock(ctx context.Context, id string) error {
+	return c.makeRequest(ctx, http.MethodDelete, fmt.Sprintf("%s/v1/blocks/%s", apiBaseURL, id), nil, nil)
+}
+
+// UpdateBlock updates a block in the Notion API.
+// On success, the block will be the complete block from the Notion API.
+// On error, the block will not be changed.
+func (c *Client) UpdateBlock(ctx context.Context, block *notion.Block) error {
+	return c.updateObject(ctx, fmt.Sprintf("%s/v1/blocks/%s", apiBaseURL, block.ID), block, block)
+}
+
+// GetBlockChildren gets the children of the block with the given id from the Notion API.
 // If `maxResults < 0`, then this will get all the children of the block.
 func (c *Client) GetBlockChildren(ctx context.Context, id string, cursor *string, maxResults int) ([]*notion.Block, error) {
 	var results notion.Blocks

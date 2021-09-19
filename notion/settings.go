@@ -7,6 +7,7 @@ const version = "v0.0.0"
 // Versions holds a list of all valid versions of the Notion API.
 var Versions = []string{
 	"2021-05-13",
+	"2021-08-16",
 }
 
 // Settings represents the settings needed to use the Notion API.

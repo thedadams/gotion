@@ -10,7 +10,6 @@ import (
 
 	"github.com/sethgrid/pester"
 	"github.com/thedadams/gotion/notion"
-
 	"golang.org/x/time/rate"
 )
 
@@ -81,7 +80,7 @@ func (c *Client) makeRequest(ctx context.Context, method, url string, body io.Re
 
 	c.settings.ToHeaders(req)
 
-	if err = c.rateLimiter.Wait(ctx); err != nil {
+	if err := c.rateLimiter.Wait(ctx); err != nil {
 		return err
 	}
 
@@ -104,6 +103,24 @@ func (c *Client) makeRequest(ctx context.Context, method, url string, body io.Re
 		return json.Unmarshal(respBody, &respObject)
 	}
 	return nil
+}
+
+func (c *Client) createObject(ctx context.Context, url string, body map[string]interface{}, respObject interface{}) error {
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	return c.makeRequest(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes), respObject)
+}
+
+func (c *Client) updateObject(ctx context.Context, url string, body, respObject interface{}) error {
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	return c.makeRequest(ctx, http.MethodPatch, url, bytes.NewBuffer(bodyBytes), respObject)
 }
 
 func (c *Client) queryForList(ctx context.Context, url string, body paginated, results list) error {

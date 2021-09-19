@@ -47,6 +47,7 @@ const (
 	RollupFunctionEnumMin               = "min"
 	RollupFunctionEnumMax               = "max"
 	RollupFunctionEnumRange             = "range"
+	RollupFunctionEnumShowOriginal      = "show_original"
 
 	NumberConfigurationTypeEnumNumber           = "number"
 	NumberConfigurationTypeEnumNumberWithCommas = "number_with_commas"
@@ -154,6 +155,7 @@ func (rfet *RollupFunctionEnumType) IsValidEnum() bool {
 		RollupFunctionEnumMin,
 		RollupFunctionEnumMax,
 		RollupFunctionEnumRange,
+		RollupFunctionEnumShowOriginal,
 	)
 }
 
@@ -220,9 +222,12 @@ type Rollup struct {
 type Database struct {
 	Object
 	Editable
+	Icons
 	Title      []RichText         `json:"title"`
 	Properties DatabaseProperties `json:"properties"`
 	Children   Blocks             `json:"-"`
+	Parent     Parent             `json:"parent"`
+	URL        *jsonURL           `json:"url"`
 }
 
 // DatabaseProperties is a short-hand type for a slice of DatabaseProperty,

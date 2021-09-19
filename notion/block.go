@@ -52,6 +52,7 @@ type Block struct {
 	Editable
 	Type        BlockTypeEnum `json:"type"`
 	HasChildren bool          `json:"has_children"`
+	Archived    bool          `json:"archived"`
 	Text        []*RichText   `json:"text,omitempty"`
 	Children    []*Block      `json:"children,omitempty"`
 	// Only valid for To Do blocks
@@ -70,7 +71,7 @@ func (b *block) getType() string {
 	return string(b.Type)
 }
 
-// FieldsToExpand implements the expander interface
+// fieldsToExpand implements the expander interface
 func (b *block) fieldsToExpand() []string {
 	return []string{"text", "children", "checked", "title"}
 }
